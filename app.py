@@ -164,7 +164,17 @@ if "chat_db" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "current_session_id" not in st.session_state:
-    st.session_state.current_session_id = st.session_state.chat_db.start_new_session()
+    # Check for existing sessions and load the most recent one if available
+    sessions = st.session_state.chat_db.get_all_sessions()
+    if sessions:
+        st.session_state.current_session_id = sessions[0][0]  # Load the first (most recent) session ID
+        history_msgs = st.session_state.chat_db.get_session_history(st.session_state.current_session_id)
+        st.session_state.messages = [
+            {"role": role, "content": content}
+            for role, content, _ in history_msgs
+        ]
+    else:
+        st.session_state.current_session_id = None  # No session until manually created
 
 # --- Load Configuration ---
 @st.cache_resource
@@ -301,9 +311,12 @@ st.markdown("Chat with your documents using Ollama and your powerful RAG engine.
 # Initialize session state variables (theme init is now at the top, before get_theme_css)
 # The other session state inits are fine here.
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+if st.session_state.current_session_id is None:
+    st.info("No active chat session. Please start a new session from the sidebar.")
+else:
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 # Compact Document Upload and Settings directly above Chat Input
 with st.container():
@@ -419,15 +432,17 @@ with st.container():
             help="Generates multiple versions of your query to find more comprehensive results."
         )
 
-if prompt := st.chat_input("Ask a question about your documents..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.session_state.chat_db.save_message(st.session_state.current_session_id, "user", prompt)
-    # Suggest a title based on first user message if session is new
-    if len([m for m in st.session_state.messages if m["role"] == "user"]) == 1:
-        suggested_title = st.session_state.chat_db.get_session_title_suggestion(st.session_state.current_session_id)
-        st.session_state.chat_db.update_session_title(st.session_state.current_session_id, suggested_title)
-    with st.chat_message("user"):
-        st.markdown(prompt)
+if st.session_state.current_session_id is not None:
+    if prompt := st.chat_input("Ask a question about your documents..."):
+        if prompt:  # Additional check to ensure prompt is not None or empty
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.session_state.chat_db.save_message(st.session_state.current_session_id, "user", prompt)
+            # Suggest a title based on first user message if session is new
+            if len([m for m in st.session_state.messages if m["role"] == "user"]) == 1:
+                suggested_title = st.session_state.chat_db.get_session_title_suggestion(st.session_state.current_session_id)
+                st.session_state.chat_db.update_session_title(st.session_state.current_session_id, suggested_title)
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
     with st.chat_message("assistant"):
         response_container = st.empty()

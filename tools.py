@@ -39,6 +39,8 @@ class ToolRegistry:
     
     def route_query(self, query: str) -> Optional[Dict]:
         """Detect if a query requires a tool and return the tool and input."""
+        if not query:  # Check if query is None or empty
+            return None
         query_lower = query.lower()
         if any(op in query for op in ['+', '-', '*', '/']) and re.search(r'\d', query):
             return {'name': 'calculator', 'input': query}
