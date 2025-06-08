@@ -1,0 +1,6 @@
+[theme]
+primaryColor="#FF9B45"
+backgroundColor="#521C0D"
+secondaryBackgroundColor="#6a2f1b" # A slightly lighter shade of #521C0D for secondary bg
+textColor="#F4E7E1"
+font="sans serif"
