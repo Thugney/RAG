@@ -14,6 +14,130 @@ from datetime import timedelta
 
 # Streamlit has built-in health check at /_stcore/health
 
+# --- Theme State Initialization (must be very early) ---
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark" # Default to dark theme
+
+# --- Theme CSS Generation Function ---
+def get_theme_css():
+    # Colors from user palette
+    light_bg = "#F4E7E1" # Lightest, for light theme background
+    dark_text_fg = "#521C0D" # Darkest, for light theme text
+    light_primary = "#D5451B" # Darker Orange/Red, for light theme primary
+    light_secondary_bg = "#e0d8d3" # A slightly darker shade of light_bg
+
+    dark_bg = "#521C0D" # Darkest Brown, for dark theme background
+    light_text_fg = "#F4E7E1" # Lightest, for dark theme text
+    dark_primary = "#FF9B45" # Orange, for dark theme primary
+    dark_secondary_bg = "#6a2f1b" # Slightly lighter dark_bg
+
+    common_css = f"""
+    /* General font style (already set in config.toml but can be reinforced) */
+    body {{
+        font-family: 'sans serif';
+    }}
+    /* Custom scrollbar for webkit browsers */
+    ::-webkit-scrollbar {{
+        width: 8px;
+    }}
+    ::-webkit-scrollbar-track {{
+        background: transparent;
+    }}
+    ::-webkit-scrollbar-thumb {{
+        background-color: {dark_primary if st.session_state.theme == "dark" else light_primary};
+        border-radius: 10px;
+        border: 2px solid {dark_bg if st.session_state.theme == "dark" else light_bg};
+    }}
+    """
+
+    if st.session_state.theme == "light":
+        return f"""
+        <style>
+            /* Override Streamlit's default theme variables for light mode */
+            :root {{
+                --primary-color: {light_primary};
+                --background-color: {light_bg};
+                --secondary-background-color: {light_secondary_bg};
+                --text-color: {dark_text_fg};
+                --font: "sans serif";
+            }}
+            /* Ensure all text elements get the correct color */
+            body, .stApp, .stChatFloatingInputContainer, .stTextArea textarea, .stTextInput input, .stMarkdown, .stButton button, .stFileUploader, .stExpander, .stText, .stAlert, .stSpinner > div > div {{
+                color: {dark_text_fg} !important;
+            }}
+            /* Specific overrides for elements that might not pick up root variables */
+             .stButton > button {{
+                background-color: {light_primary};
+                color: {light_bg}; /* Text on primary buttons */
+                border: 1px solid {light_primary};
+            }}
+            .stButton > button:hover {{
+                opacity: 0.8;
+            }}
+             /* Sidebar background and text */
+            .st-emotion-cache-10oheav {{ /* This selector might be Streamlit version specific for sidebar */
+                background-color: {light_secondary_bg} !important;
+            }}
+            .st-emotion-cache-10oheav .stMarkdown, .st-emotion-cache-10oheav .stButton button {{
+                 color: {dark_text_fg} !important;
+            }}
+            /* Chat messages */
+            .stChatMessage {{
+                background-color: {light_secondary_bg};
+                border-radius: 0.5rem;
+            }}
+            .stChatMessage {{ /* Ensure chat message text color is also overridden */
+                color: {dark_text_fg} !important;
+            }}
+            /* Input fields */
+            .stTextArea textarea, .stTextInput input {{
+                background-color: {light_secondary_bg};
+                color: {dark_text_fg};
+                border: 1px solid {dark_text_fg};
+            }}
+            {common_css}
+        </style>
+        """
+    else: # Dark theme (mostly from config.toml, but can add specifics here)
+        return f"""
+        <style>
+             /* Ensure all text elements get the correct color from config.toml */
+            body, .stApp, .stChatFloatingInputContainer, .stTextArea textarea, .stTextInput input, .stMarkdown, .stButton button, .stFileUploader, .stExpander, .stText, .stAlert, .stSpinner > div > div {{
+                color: {light_text_fg} !important;
+            }}
+            .stButton > button {{
+                background-color: {dark_primary};
+                color: {dark_bg}; /* Text on primary buttons */
+                border: 1px solid {dark_primary};
+            }}
+             .stButton > button:hover {{
+                opacity: 0.8;
+            }}
+            /* Sidebar background and text */
+            .st-emotion-cache-10oheav {{ /* This selector might be Streamlit version specific for sidebar */
+                background-color: {dark_secondary_bg} !important;
+            }}
+             .st-emotion-cache-10oheav .stMarkdown, .st-emotion-cache-10oheav .stButton button {{
+                 color: {light_text_fg} !important;
+            }}
+            /* Chat messages */
+            .stChatMessage {{
+                background-color: {dark_secondary_bg};
+                border-radius: 0.5rem;
+            }}
+            .stChatMessage {{ /* Ensure chat message text color is also overridden */
+                color: {light_text_fg} !important;
+            }}
+             /* Input fields */
+            .stTextArea textarea, .stTextInput input {{
+                background-color: {dark_secondary_bg};
+                color: {light_text_fg};
+                border: 1px solid {light_text_fg};
+            }}
+            {common_css}
+        </style>
+        """
+
 # Import your powerful classes from the refactored modules
 from config_loader import Config
 from chunker import SmartChunker
@@ -29,6 +153,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # --- Page Configuration ---
 st.set_page_config(page_title="Local RAG System", page_icon="⚙️", layout="wide")
+
+# --- Apply Theme CSS (must be after page_config and theme function definition) ---
+st.markdown(get_theme_css(), unsafe_allow_html=True)
 
 # Initialize session state variables at the very start to avoid access issues during rerun
 # Must be done right after imports and page config
@@ -156,18 +283,23 @@ with st.sidebar:
     st.markdown("- [Facebook](https://facebook.com/eriteach)")
     st.markdown("- [TikTok](https://tiktok.com/eriteach)")
 
+    st.markdown("---")
+    st.sidebar.header("🎨 Theme Options", divider="blue")
+    def theme_switch_callback():
+        if st.session_state.theme == "dark":
+            st.session_state.theme = "light"
+        else:
+            st.session_state.theme = "dark"
+
+    current_theme_label = "Switch to Light Mode" if st.session_state.theme == "dark" else "Switch to Dark Mode"
+    st.sidebar.button(current_theme_label, on_click=theme_switch_callback, use_container_width=True)
+
 # --- Main Chat Interface ---
 st.title("🤖 Local RAG System")
 st.markdown("Chat with your documents using Ollama and your powerful RAG engine.")
 
-# Initialize session state variables at the very start to avoid access issues during rerun
-# Must be done before any UI elements or other code that might access session state
-if "chat_db" not in st.session_state:
-    st.session_state.chat_db = ChatHistoryDB()
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "current_session_id" not in st.session_state:
-    st.session_state.current_session_id = st.session_state.chat_db.start_new_session()
+# Initialize session state variables (theme init is now at the top, before get_theme_css)
+# The other session state inits are fine here.
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
