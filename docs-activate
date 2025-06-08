@@ -1,0 +1,63 @@
+Quick Guide: uv Virtual Environment Management
+The primary goal was to install torch==2.0.1, which requires Python 3.11, while your system default was Python 3.13. We achieved this by creating a dedicated virtual environment with the correct Python version.
+
+1. The Problem
+You encountered an error:
+
+× No solution found when resolving dependencies:
+╰─▶ Because torch==2.0.1 has no wheels with a matching Python ABI tag (e.g., `cp313`) and you require torch==2.0.1, we can conclude that your requirements are unsatisfiable.
+This means torch v2.0.1 does not have pre-compiled binaries (wheels) for your Python 3.13.1, but it does for Python 3.11 (among others).
+
+2. The Solution: Creating a Python 3.11 Virtual Environment with uv
+Since your system's python --version was pointing to Python 3.13.1 or a Microsoft Store stub, we explicitly told uv where to find a specific Python 3.11 installation.
+
+Command to Create the Virtual Environment:
+
+We used an absolute path to place the virtual environment on your J: drive:
+
+Bash
+
+uv venv --python "C:\Users\Editor\AppData\Local\Programs\Python\Python311\python.exe" "J:\PythonEnvs\rag_py311"
+uv venv: The uv command for creating virtual environments.
+--python "C:\Users\Editor\AppData\Local\Programs\Python\Python311\python.exe": This is the critical part. It specifies the full path to your Python 3.11.x executable. You replaced the placeholder with your actual installation path. This ensures uv uses the correct Python version to build the environment.
+"J:\PythonEnvs\rag_py311": This is the full path and desired name of your new virtual environment directory. We enclosed it in quotes because the path J:\PythonEnvs\rag_py311 contained a space in previous attempts, which uv misinterpreted as separate arguments.
+3. Installing Dependencies
+After creating and activating the environment, you would install your project's dependencies using your requirements.txt file:
+
+Bash
+
+uv pip install -r .\requirements.txt
+How to Activate the Virtual Environment in the Future
+Whenever you want to work on this project in the future, you need to activate this specific virtual environment. This tells your terminal to use the Python and packages installed within J:\PythonEnvs\rag_py311 instead of your system's default Python.
+
+1. Open your terminal (Command Prompt or PowerShell).
+
+2. Navigate to your project directory (where your requirements.txt and main project files are, if you're not already there). This isn't strictly necessary for activation, but it's good practice for working on the project.
+
+3. Run the appropriate activation script:
+
+If you are using PowerShell:
+
+PowerShell
+
+J:\PythonEnvs\rag_py311\Scripts\Activate.ps1
+If you are using Command Prompt (cmd.exe):
+
+DOS
+
+J:\PythonEnvs\rag_py311\Scripts\activate.bat
+What to look for after activation:
+
+Once activated, your terminal prompt will usually change to indicate the active environment. It often looks something like this:
+
+(rag_py311) C:\Your\Project\Path>
+
+This (rag_py311) prefix confirms you are now operating within your Python 3.11 virtual environment.
+
+4. When finished, deactivate (optional but good practice):
+
+To return to your system's default Python environment, simply type:
+
+Bash
+
+deactivate
