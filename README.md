@@ -1,6 +1,6 @@
 # Local RAG System
 
-A local Retrieval-Augmented Generation (RAG) system for document interaction using various embedding and generation models.
+A local Retrieval-Augmented Generation (RAG) system for document interaction using various embedding and generation models. This system allows users to upload documents, process them into a searchable vector database, and query content through a chat interface with AI-generated responses, ensuring privacy by running locally.
 
 ## Project Goal
 
