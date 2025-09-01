@@ -12,13 +12,23 @@ A powerful Retrieval-Augmented Generation system that allows you to chat with yo
 - **Streamlit UI**: Beautiful web interface with real-time updates
 - **Evaluation Metrics**: Comprehensive performance tracking and analytics
 
+## 🏗️ Architecture
+
+The system follows a modular architecture with clear separation of concerns:
 ### Core Components
-- **Frontend**: Streamlit web interface
-- **Application**: Python orchestration layer
-- **Processing**: Document chunking and embedding generation
-- **Retrieval**: FAISS vector search and context retrieval
-- **Generation**: DeepSeek LLM integration
-- **Data**: SQLite + local file storage
+- **Frontend**: Streamlit web interface with real-time chat and document upload
+- **Application**: Python orchestration layer managing the RAG pipeline
+- **Processing**: Intelligent document chunking and multi-provider embedding generation
+- **Retrieval**: FAISS vector search with configurable parameters and RAG fusion
+- **Generation**: DeepSeek LLM integration with streaming responses
+- **Data**: SQLite chat history + local file storage for documents and vectors
+
+### Key Features
+- **Flexible Embeddings**: Switch between HuggingFace and Ollama providers via config
+- **Advanced Retrieval**: RAG fusion, query expansion, and hybrid search capabilities
+- **Real-time UI**: Streamlit-based interface with live updates and progress indicators
+- **Session Management**: Persistent chat history with automatic cleanup
+- **Evaluation System**: Comprehensive performance metrics and quality assessment
 
 ## 📦 Installation
 
@@ -92,8 +102,6 @@ RAGagument/
 ├── requirements.txt      # Dependencies
 ├── .gitignore           # Git exclusion rules
 ├── .env                 # Environment variables (git ignored)
-├── docs/                # Documentation
-│   └── architecture/    # Sharded architecture docs
 ├── uploaded_docs/       # Uploaded documents (git ignored)
 └── vector_db/           # FAISS vector store (git ignored)
 ```
@@ -120,6 +128,12 @@ RAGagument/
 ## 📝 License
 
 MIT License - see LICENSE file for details
+
+## 🆘 Support
+
+For issues and questions, please check:
+- [Issue Tracker](https://github.com/Thugney/rag/issues)
+- [Discussion Forum](https://github.com/Thugney/rag/discussions)
 
 ## 🔗 Links
 

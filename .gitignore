@@ -71,6 +71,9 @@ temp/
 .bmad-core/
 .claude/
 
+# Documentation (for development only, not for public repo)
+docs/
+
 # Evaluation and reports
 daily_report_*.json
 rag_metrics_export.json

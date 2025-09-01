@@ -5,7 +5,7 @@ system:
 
 embedding:
   # Choose embedding provider: "huggingface" or "ollama"
-  provider: "ollama"
+  provider: "huggingface"
   
   # HuggingFace model (used when provider: "huggingface")
   huggingface_model: "all-MiniLM-L6-v2"
