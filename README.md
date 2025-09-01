@@ -12,10 +12,6 @@ A powerful Retrieval-Augmented Generation system that allows you to chat with yo
 - **Streamlit UI**: Beautiful web interface with real-time updates
 - **Evaluation Metrics**: Comprehensive performance tracking and analytics
 
-## 🏗️ Architecture
-
-For detailed architecture documentation, see [docs/architecture.md](docs/architecture.md)
-
 ### Core Components
 - **Frontend**: Streamlit web interface
 - **Application**: Python orchestration layer
