@@ -139,51 +139,72 @@ class FAISSVectorStore:
         """Load index and metadata from disk."""
         if self.index_file.exists() and self.metadata_file.exists():
             logger.info(f"Loading vector store from {self.persist_path}...")
-            self.index = faiss.read_index(str(self.index_file))
             
-            # Handle backward compatibility with old flat indexes
-            if isinstance(self.index, faiss.IndexFlat):
-                logger.info("Converting old flat index to IVF")
-                quantizer = faiss.IndexFlatIP(self.dimension)
-                new_index = faiss.IndexIVFFlat(
-                    quantizer,
-                    self.dimension,
-                    self.nlist,
-                    faiss.METRIC_INNER_PRODUCT
-                )
-                # Only train if index has sufficient vectors
-                if self.index.ntotal > 100:  # Minimum for meaningful clustering
-                    vectors = self.index.reconstruct_n(0, min(1000, self.index.ntotal))
-                    # Adjust cluster count if needed
-                    n_clusters = min(100, len(vectors)//2)  # Ensure nx >= k
-                    quantizer = faiss.IndexFlatL2(self.dimension)
-                    new_index = faiss.IndexIVFFlat(quantizer, self.dimension, n_clusters)
-                    new_index.train(vectors)
-                    new_index.add(vectors)
-                    self.index = new_index
-                elif self.index.ntotal > 0:
-                    # For small datasets, use flat index without clustering
-                    new_index = faiss.IndexFlatL2(self.dimension)
-                    new_index.add(self.index.reconstruct_n(0, self.index.ntotal))
-                    self.index = new_index
+            # Check if existing index dimension matches expected dimension
+            try:
+                self.index = faiss.read_index(str(self.index_file))
+                if hasattr(self.index, 'd') and self.index.d != self.dimension:
+                    logger.warning(f"Dimension mismatch: existing index has dimension {self.index.d}, expected {self.dimension}")
+                    logger.warning("Creating new index with correct dimension")
+                    self.index = None  # Force creation of new index
+                    # Don't return here - let it fall through to create new index
                 else:
-                    self.index = new_index
-                
-            if self.use_gpu and self.index is not None:
-                try:
-                    self.gpu_index = faiss.index_cpu_to_gpu(
-                        self.gpu_resources,
-                        0,
-                        self.index
-                    )
-                except Exception as e:
-                    print(f"Error moving index to GPU: {e}")
-                    self.use_gpu = False
-                
+                    # Handle backward compatibility with old flat indexes
+                    if isinstance(self.index, faiss.IndexFlat):
+                        logger.info("Converting old flat index to IVF")
+                        quantizer = faiss.IndexFlatIP(self.dimension)
+                        new_index = faiss.IndexIVFFlat(
+                            quantizer,
+                            self.dimension,
+                            self.nlist,
+                            faiss.METRIC_INNER_PRODUCT
+                        )
+                        # Only train if index has sufficient vectors
+                        if self.index.ntotal > 100:  # Minimum for meaningful clustering
+                            vectors = self.index.reconstruct_n(0, min(1000, self.index.ntotal))
+                            # Adjust cluster count if needed
+                            n_clusters = min(100, len(vectors)//2)  # Ensure nx >= k
+                            quantizer = faiss.IndexFlatL2(self.dimension)
+                            new_index = faiss.IndexIVFFlat(quantizer, self.dimension, n_clusters)
+                            new_index.train(vectors)
+                            new_index.add(vectors)
+                            self.index = new_index
+                        elif self.index.ntotal > 0:
+                            # For small datasets, use flat index without clustering
+                            new_index = faiss.IndexFlatL2(self.dimension)
+                            new_index.add(self.index.reconstruct_n(0, self.index.ntotal))
+                            self.index = new_index
+                        else:
+                            self.index = new_index
+            except Exception as e:
+                logger.error(f"Error loading index: {e}")
+                self.index = None
+        
+        # If index doesn't exist, is None, or had dimension mismatch, create new one
+        if self.index is None:
+            logger.info("Creating new vector store index")
+            self._init_index()
+            self.chunks = []
+            return
+        
+        # Load metadata if index exists
+        if self.metadata_file.exists():
             with open(self.metadata_file, 'r', encoding='utf-8') as f:
                 metadata_list = json.load(f)
             self.chunks = [DocumentChunk(content=m['content'], metadata=m['metadata']) for m in metadata_list]
             logger.info(f"Loaded {self.index.ntotal} vectors and {len(self.chunks)} chunks.")
+        
+        # GPU setup
+        if self.use_gpu and self.index is not None:
+            try:
+                self.gpu_index = faiss.index_cpu_to_gpu(
+                    self.gpu_resources,
+                    0,
+                    self.index
+                )
+            except Exception as e:
+                print(f"Error moving index to GPU: {e}")
+                self.use_gpu = False
             
     def benchmark(self, queries: np.ndarray, k_values: List[int] = [1, 5, 10]) -> Dict[str, Any]:
         """Run performance benchmarks on the index.

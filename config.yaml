@@ -4,8 +4,14 @@ system:
   top_k: 5
 
 embedding:
-  # We will still use local Ollama for embeddings for now
-  model: "mxbai-embed-large:latest" 
+  # Choose embedding provider: "huggingface" or "ollama"
+  provider: "ollama"
+  
+  # HuggingFace model (used when provider: "huggingface")
+  huggingface_model: "all-MiniLM-L6-v2"
+  
+  # Ollama model (used when provider: "ollama")  
+  ollama_model: "mxbai-embed-large:latest" 
 
 llm:
   # Switched to the cloud API provider
