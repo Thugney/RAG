@@ -121,13 +121,6 @@ RAGagument/
 
 MIT License - see LICENSE file for details
 
-## 🆘 Support
-
-For issues and questions, please check:
-- [Documentation](docs/)
-- [Issue Tracker](https://github.com/Thugney/rag/issues)
-- [Discussion Forum](https://github.com/Thugney/rag/discussions)
-
 ## 🔗 Links
 
 - [DeepSeek API](https://platform.deepseek.com/)
