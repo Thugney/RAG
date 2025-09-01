@@ -1,0 +1,15 @@
+streamlit
+PyYAML
+numpy
+faiss-cpu
+ollama
+sentence-transformers
+chromadb
+PyPDF2
+python-docx
+markdown
+load_dotenv
+deepseek
+openai
+rank_bm25
+spacy
