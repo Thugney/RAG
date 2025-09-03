@@ -1,0 +1,26 @@
+# Development environment overrides
+system:
+  max_file_size_mb: 50  # Larger files for development
+
+logging:
+  level: "DEBUG"
+  format: "text"  # Easier to read in development
+
+streamlit:
+  server:
+    enableCORS: true
+    enableXsrfProtection: false
+    headless: false
+
+development:
+  hot_reload: true
+  debug_tools: true
+  profile_memory: false
+
+monitoring:
+  enabled: false  # Disable monitoring in development
+
+security:
+  cors_enabled: true
+  xsrf_protection: false
+  rate_limiting_enabled: false

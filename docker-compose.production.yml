@@ -1,0 +1,91 @@
+services:
+  ragagument:
+    image: ${REGISTRY:-ragagument}:${TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    volumes:
+      - rag_prod_documents:/app/uploaded_docs
+      - rag_prod_vectors:/app/vector_db
+      - rag_prod_database:/app/chat_history.db
+    environment:
+      - ENVIRONMENT=production
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+      - LOG_LEVEL=WARNING
+      - MAX_FILE_SIZE=10485760
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpu: '2.0'
+        reservations:
+          memory: 2G
+          cpu: '1.0'
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ragagument.rule=Host(`${DOMAIN:-ragagument.localhost}`)"
+      - "traefik.http.routers.ragagument.entrypoints=websecure"
+      - "traefik.http.routers.ragagument.tls.certresolver=myresolver"
+      - "traefik.http.services.ragagument.loadbalancer.server.port=8501"
+
+  # Optional: Ollama service for local embeddings
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpu: '4.0'
+        reservations:
+          memory: 4G
+          cpu: '2.0'
+    profiles:
+      - with-ollama
+
+  # Optional: Traefik reverse proxy
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    profiles:
+      - with-traefik
+
+volumes:
+  rag_prod_documents:
+    driver: local
+  rag_prod_vectors:
+    driver: local
+  rag_prod_database:
+    driver: local
+  ollama_data:
+    driver: local

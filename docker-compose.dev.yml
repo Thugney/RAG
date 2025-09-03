@@ -1,0 +1,55 @@
+services:
+  ragagument:
+    build:
+      context: .
+      target: development
+      args:
+        - ENVIRONMENT=development
+    ports:
+      - "8501:8501"    # Streamlit UI
+      - "5678:5678"    # Debug adapter
+    volumes:
+      - .:/app         # Live code reload
+      - ./uploaded_docs:/app/uploaded_docs
+      - ./vector_db:/app/vector_db
+      - ./chat_history.db:/app/chat_history.db
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - STREAMLIT_SERVER_ENABLE_CORS=true
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
+    develop:
+      watch:
+        - path: ./app.py
+          action: sync
+          target: /app/app.py
+        - path: ./requirements.txt
+          action: rebuild
+        - path: ./src
+          action: sync
+          target: /app/src
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional development services
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    profiles:
+      - with-ollama
+
+volumes:
+  ollama_data:

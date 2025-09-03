@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ragagument
+  namespace: ragagument-production
+  labels:
+    app: ragagument
+    environment: production
+    version: v1.0.0
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: ragagument
+  template:
+    metadata:
+      labels:
+        app: ragagument
+        environment: production
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: ragagument-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: ragagument
+        image: registry.example.com/ragagument:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8501
+          name: http
+        - containerPort: 8000
+          name: metrics
+        env:
+        - name: ENVIRONMENT
+          value: production
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        envFrom:
+        - configMapRef:
+            name: ragagument-config
+        - secretRef:
+            name: ragagument-secrets
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+        - name: documents-volume
+          mountPath: /app/uploaded_docs
+        - name: vectors-volume
+          mountPath: /app/vector_db
+        - name: database-volume
+          mountPath: /app/chat_history.db
+          subPath: chat_history.db
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 45
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8501
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 2
+        startupProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          failureThreshold: 30
+          periodSeconds: 5
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 30"]
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ragagument-config
+      - name: documents-volume
+        persistentVolumeClaim:
+          claimName: ragagument-documents-pvc
+      - name: vectors-volume
+        persistentVolumeClaim:
+          claimName: ragagument-vectors-pvc
+      - name: database-volume
+        persistentVolumeClaim:
+          claimName: ragagument-database-pvc
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - ragagument
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "ragagument"
+        effect: "NoSchedule"
+      nodeSelector:
+        node-type: application

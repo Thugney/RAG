@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ragagument-config
+  namespace: ragagument-production
+data:
+  config.yaml: |
+    system:
+      chunk_size: 512
+      overlap: 128
+      top_k: 5
+      max_file_size_mb: 10
+    logging:
+      level: WARNING
+      format: json
+    monitoring:
+      enabled: true
+      prometheus_port: 8000
+    security:
+      rate_limiting_enabled: true
+      max_requests_per_minute: 100
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ragagument-config-staging
+  namespace: ragagument-staging
+data:
+  config.yaml: |
+    system:
+      chunk_size: 512
+      overlap: 128
+      top_k: 5
+      max_file_size_mb: 10
+    logging:
+      level: INFO
+      format: json
+    monitoring:
+      enabled: true
+      prometheus_port: 8000
+    security:
+      rate_limiting_enabled: true
+      max_requests_per_minute: 50
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ragagument-config-dev
+  namespace: ragagument-development
+data:
+  config.yaml: |
+    system:
+      chunk_size: 512
+      overlap: 128
+      top_k: 5
+      max_file_size_mb: 50
+    logging:
+      level: DEBUG
+      format: text
+    monitoring:
+      enabled: false
+    security:
+      rate_limiting_enabled: false

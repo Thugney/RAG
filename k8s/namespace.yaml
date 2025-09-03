@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ragagument-production
+  labels:
+    name: ragagument-production
+    environment: production
+    app: ragagument
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ragagument-staging
+  labels:
+    name: ragagument-staging
+    environment: staging
+    app: ragagument
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ragagument-development
+  labels:
+    name: ragagument-development
+    environment: development
+    app: ragagument

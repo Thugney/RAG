@@ -25,7 +25,7 @@ venv/
 env/
 rag_venv/
 ENV/
-.env/
+.env
 .venv/
 
 # IDE
@@ -59,6 +59,11 @@ chat_history.db
 .env.test.local
 .env.production.local
 
+# Sensitive configuration files
+config/production.yaml
+config/staging.yaml
+k8s/secret.yaml
+
 # Logs
 logs/
 *.log
@@ -71,7 +76,7 @@ temp/
 .bmad-core/
 .claude/
 
-# Documentation (for development only, not for public repo)
+# Documentation - Development only, exclude from public repo
 docs/
 
 # Evaluation and reports

@@ -1,0 +1,43 @@
+# Base configuration - common across all environments
+system:
+  chunk_size: 512
+  overlap: 128
+  top_k: 5
+  max_file_size_mb: 10
+
+embedding:
+  provider: "huggingface"
+  huggingface_model: "all-MiniLM-L6-v2"
+  ollama_model: "mxbai-embed-large:latest"
+
+llm:
+  provider: "deepseek"
+  model: "deepseek-chat"
+  temperature: 0.2
+  max_tokens: 4096
+
+vector_store:
+  backend: "faiss"
+  persist_path: "./vector_db"
+
+advanced:
+  enable_fusion: true
+  enable_rewriting: true
+  enable_tools: true
+  fusion_queries: 3
+
+logging:
+  level: "INFO"
+  format: "json"
+  file_path: "/var/log/ragagument/app.log"
+
+monitoring:
+  enabled: true
+  prometheus_port: 8000
+  metrics_prefix: "ragagument"
+
+security:
+  cors_enabled: false
+  xsrf_protection: true
+  rate_limiting_enabled: false
+  max_requests_per_minute: 100
